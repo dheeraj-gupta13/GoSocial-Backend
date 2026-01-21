@@ -108,6 +108,11 @@ public class ProfileRepository {
     }
 
     public int checkIfFollowing(int currentUserId, int targetUserId) {
+
+        if (currentUserId == targetUserId) {
+            return -1;
+        }
+
         String sql = "SELECT 1 FROM followers WHERE following_user_id=? AND followed_user_id=?";
         try {
             return jdbcTemplate.queryForObject(sql, Integer.class, currentUserId, targetUserId);

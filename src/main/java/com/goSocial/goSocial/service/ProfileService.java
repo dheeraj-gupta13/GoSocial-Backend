@@ -96,7 +96,9 @@ public class ProfileService {
             String username,
             String biodata,
             MultipartFile profilePic,
-            MultipartFile backgroundPic
+            MultipartFile backgroundPic,
+            boolean removeProfilePic,
+            boolean removeBackgroundPic
     ) {
 
         Profile existing = profileRepository.getProfileByUserId(userId);
@@ -111,10 +113,23 @@ public class ProfileService {
             if (profilePic != null && !profilePic.isEmpty()) {
                 avatarUrl = uploadToCloudinary(profilePic, "profiles");
             }
+            else if(removeProfilePic){
+                avatarUrl = "https://res.cloudinary.com/dol59d0b3/image/upload/v1755956191/profiles/blob.png";
+            }
 
             if (backgroundPic != null && !backgroundPic.isEmpty()) {
                 backgroundUrl = uploadToCloudinary(backgroundPic, "backgrounds");
             }
+            else if(removeBackgroundPic){
+                backgroundUrl = "https://res.cloudinary.com/dol59d0b3/image/upload/v1755957313/backgrounds/blob.png";
+            }
+
+            System.out.println("***********");
+            System.out.println(userId);
+            System.out.println(username);
+            System.out.println(biodata);
+            System.out.println(avatarUrl);
+            System.out.println(backgroundUrl);
 
             profileRepository.updateProfile(
                     userId,
@@ -133,6 +148,7 @@ public class ProfileService {
             );
 
         } catch (Exception e) {
+            System.out.println("Failed to update profile " + e);
             throw new InternalServerException("Failed to update profile");
         }
     }

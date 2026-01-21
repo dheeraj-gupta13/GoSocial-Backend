@@ -7,6 +7,7 @@ import com.goSocial.goSocial.service.ProfileService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -57,14 +58,22 @@ public class ProfileController {
 
     @PutMapping("/updateProfile")
     public ResponseEntity<ApiResponse<?>> updateProfile(
-            @RequestParam(required = false) String username,
-            @RequestParam(required = false) String biodata,
-            @RequestPart(required = false) MultipartFile profile_pic,
-            @RequestPart(required = false) MultipartFile background_pic,
-            @RequestHeader("X-USER-ID") int userId
+            @RequestParam("username") String new_username,
+            @RequestParam("biodata") String biodata,
+            @RequestParam(value = "profile_pic", required = false) MultipartFile profile_pic,
+            @RequestParam(value = "background_pic", required = false) MultipartFile background_pic,
+
+            @RequestParam(value = "removeProfilePic", defaultValue = "false") boolean removeProfilePic,
+            @RequestParam(value = "removeBackgroundPic", defaultValue = "false") boolean removeBackgroundPic,
+
+            Authentication authentication
     ) {
+
+        String userIdStr = authentication.getName();
+        int user_id = Integer.parseInt(userIdStr);
+
         UpdateProfileResponse response =
-                profileService.updateProfile(userId, username, biodata, profile_pic, background_pic);
+                profileService.updateProfile(user_id, new_username, biodata, profile_pic, background_pic, removeProfilePic, removeBackgroundPic);
 
         return ResponseEntity.ok(
                 new ApiResponse<>(true, "Profile updated successfully", response)

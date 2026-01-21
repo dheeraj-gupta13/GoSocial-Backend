@@ -15,11 +15,14 @@ import org.springframework.stereotype.Service;
 import com.cloudinary.Cloudinary;
 
 import java.sql.Timestamp;
+import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.web.multipart.MultipartFile;
 
+import static java.time.LocalDateTime.now;
 
 
 @Service
@@ -37,22 +40,54 @@ public class PostService {
     }
 
 
-    public String addPost(MultipartFile file){
+    public PostResponse addPost(
+
+            int user_id,
+            String content,
+            String location,
+            MultipartFile image
+    ){
         System.out.println(cloudinary);
 
+        String imageUrl = "";
         try{
             Map uploadResult = cloudinary.uploader().upload(
-                    file.getBytes(),
+                    image.getBytes(),
                     ObjectUtils.emptyMap()
             );
 
-            String imageUrl = uploadResult.get("secure_url").toString();
-            return imageUrl;
+            imageUrl = uploadResult.get("secure_url").toString();
+
+            System.out.println("IMAGE UPLOAD - " + imageUrl);
+
+            String sql = """
+                INSERT INTO posts (user_id, content, image_url, created_on, location)
+                VALUES (?, ?, ?, ?, ?)
+            """;
+
+            jdbcTemplate.update(
+                    sql,
+                    user_id,
+                    content,
+                    imageUrl,
+                    Timestamp.from(Instant.now()),
+                    location
+            );
         }
         catch (Exception e){
             throw new RuntimeException("Image upload failed", e);
         }
 
+        LocalDateTime time = LocalDateTime.now();
+        return new PostResponse(
+                1,
+                user_id,
+                "username",
+                content,
+                imageUrl,
+                "imageUrl",
+                time
+        );
     }
 
     public void deletePost(int post_id){
@@ -69,9 +104,9 @@ public class PostService {
 
         List<PostResponse> posts = postRepository.getPostsByUser(user_id);
 
-        if (posts.isEmpty()) {
-            throw new ResourceNotFoundException("No posts found for this user");
-        }
+//        if (posts.isEmpty()) {
+//            throw new ResourceNotFoundException("No posts found for this user");
+//        }
 
         return posts;
     }
@@ -134,15 +169,20 @@ public class PostService {
     }
 
     private String formatTime(Timestamp createdAt) {
-        long diff = System.currentTimeMillis() - createdAt.getTime();
-        long minutes = diff / (1000 * 60);
+        long diffMillis = System.currentTimeMillis() - createdAt.getTime();
+        long minutes = diffMillis / (1000 * 60);
+        long hours = minutes / 60;
+        long days = hours / 24;
+        long weeks = days / 7;
 
         if (minutes < 1) return "now";
         if (minutes < 60) return minutes + "m";
-        if (minutes < 1440) return (minutes / 60) + "h";
-        if (minutes < 2880) return "yesterday";
-        if (minutes < 43200) return (minutes / 1440) + "d";
-        return (minutes / 525600) + "y";
+        if (hours < 24) return hours + "h";
+        if (hours < 48) return "yesterday";
+        if (days < 30) return days + "d";
+        if (weeks < 52) return weeks + "w";
+
+        return (days / 365) + "y";
     }
 
     private int getCurrentUserId() {

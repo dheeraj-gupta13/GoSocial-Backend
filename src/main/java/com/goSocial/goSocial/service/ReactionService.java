@@ -69,9 +69,9 @@ public class ReactionService {
     public List<String> getReactions(int post_id) {
 
         List<String> reactions = repository.getReactions(post_id);
-        if(reactions.isEmpty()){
-            throw new ResourceNotFoundException("No reactions found for this post");
-        }
+//        if(reactions.isEmpty()){
+//            throw new ResourceNotFoundException("No reactions found for this post");
+//        }
 
         return reactions;
     }

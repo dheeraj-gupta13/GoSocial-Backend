@@ -1,10 +1,12 @@
 package com.goSocial.goSocial.controller;
 
 import com.goSocial.goSocial.Dto.ApiResponse;
+import com.goSocial.goSocial.Dto.PostResponse;
 import com.goSocial.goSocial.Dto.PostResponseDto;
 import com.goSocial.goSocial.model.Post;
 import com.goSocial.goSocial.service.PostService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -36,8 +38,25 @@ public class PostController {
     }
 
     @PostMapping("/post")
-    public String addPost(@RequestParam("file") MultipartFile file){
-         return postService.addPost(file);
+    public  ResponseEntity<PostResponse> addPost(
+            @RequestParam("image") MultipartFile image,
+            @RequestParam("content") String content,
+            @RequestParam(value = "location", required = false) String location,
+            Authentication authentication
+    ){
+        // Similar to middleware.GetCurrentUser(c)
+//        String username = authentication.getName();
+        String userIdStr = authentication.getName();
+        int user_id = Integer.parseInt(userIdStr);
+
+        PostResponse response = postService.addPost(
+                user_id,
+                content,
+                location,
+                image
+        );
+
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/post")
